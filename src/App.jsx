@@ -14,7 +14,7 @@ import {
 
 import { 
   CloudNode, ISPNode, FirewallNode, SwitchNode, 
-  ServerNode, EndDeviceNode, APNode, GroupNode 
+  ServerNode, EndDeviceNode, APNode, GroupNode, TextNode
 } from './components/nodes';
 import topologyData from './data/topology';
 import { WelcomeModal } from './components/WelcomeModal';
@@ -40,6 +40,7 @@ const nodeTypes = {
   wireless: APNode,
   monitoring: ServerNode,
   group: GroupNode,
+  text: TextNode,
   default: EndDeviceNode,
 };
 
@@ -619,6 +620,25 @@ function FlowCanvas() {
                 </div>
               )}
             </div>
+
+            <div className="w-full h-px bg-slate-100 my-4"></div>
+
+            <div>
+              <h2 className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-3">Widgets</h2>
+              <div 
+                draggable 
+                onDragStart={(e) => onDragStart(e, { type: 'text', data: { label: 'Custom Text', fontSize: 16, bgColor: 'transparent', textColor: '#1e293b' } })} 
+                className="bg-white border border-slate-200 border-dashed rounded-xl p-3 cursor-grab hover:border-blue-400 hover:shadow-md transition-all flex items-center gap-3"
+              >
+                <div className="w-10 h-10 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center shrink-0">
+                  <span className="font-serif font-bold text-slate-500 text-lg">T</span>
+                </div>
+                <div className="overflow-hidden">
+                  <div className="text-xs font-extrabold text-slate-800 truncate">Text Block</div>
+                  <div className="text-[10px] text-slate-500 truncate">Resizable annotation</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -644,8 +664,8 @@ function FlowCanvas() {
           nodeTypes={nodeTypes}
           connectionMode={ConnectionMode.Loose}
           selectionMode="partial"
-          selectionKeyCode="Shift"
-          multiSelectionKeyCode="Shift"
+          selectionKeyCode={['Shift', 'Control', 'Meta']}
+          multiSelectionKeyCode={['Shift', 'Control', 'Meta']}
           fitView
           nodesFocusable={true}
           edgesFocusable={true}
@@ -761,6 +781,51 @@ function FlowCanvas() {
                         placeholder="Add comments, IPs, config notes here..."
                       />
                     </div>
+                    {selectedNode.type === 'text' && (
+                      <div className="pt-2 border-t border-slate-100 mt-2">
+                        <div className="flex items-center justify-between gap-2 mt-2">
+                          <div className="flex-1">
+                            <label className="text-[10px] font-bold text-slate-400 uppercase">Text Color</label>
+                            <input 
+                              type="color" 
+                              className="w-full h-8 rounded cursor-pointer mt-1 border-0 p-0" 
+                              value={selectedNode.data.textColor || '#1e293b'} 
+                              onChange={(e) => updateNodeData(selectedNode.id, 'textColor', e.target.value)}
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <label className="text-[10px] font-bold text-slate-400 uppercase">Background</label>
+                            <input 
+                              type="color" 
+                              className="w-full h-8 rounded cursor-pointer mt-1 border-0 p-0" 
+                              value={selectedNode.data.bgColor || '#ffffff'} 
+                              onChange={(e) => updateNodeData(selectedNode.id, 'bgColor', e.target.value)}
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <label className="text-[10px] font-bold text-slate-400 uppercase">Size</label>
+                            <input 
+                              type="number" 
+                              min="8" max="120"
+                              className="w-full text-sm font-semibold text-slate-800 bg-slate-100/50 border border-slate-200 rounded-md px-2 py-1 mt-1 outline-none text-center h-8" 
+                              value={selectedNode.data.fontSize || 14} 
+                              onChange={(e) => updateNodeData(selectedNode.id, 'fontSize', parseInt(e.target.value))}
+                            />
+                          </div>
+                        </div>
+                        <div className="mt-3 flex items-center">
+                           <label className="flex items-center gap-2 text-xs font-bold text-slate-600 cursor-pointer">
+                             <input 
+                               type="checkbox" 
+                               checked={selectedNode.data.isBold || false}
+                               onChange={(e) => updateNodeData(selectedNode.id, 'isBold', e.target.checked)}
+                               className="rounded text-blue-500 focus:ring-blue-500"
+                             />
+                             Make Text Bold
+                           </label>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </Section>
 

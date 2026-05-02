@@ -1,8 +1,35 @@
 import React from 'react';
-import { Handle, Position } from 'reactflow';
+import { Handle, Position, NodeResizer } from 'reactflow';
 import { Cloud, Shield, Server, Router as RouterIcon, Wifi, Laptop, Printer, Video, ScanLine, Smartphone, Database, Activity, Box } from 'lucide-react';
 
 const HandleStyles = "w-3 h-3 !bg-blue-500 !border-2 !border-white !z-50 cursor-crosshair transition-transform hover:scale-150";
+
+export const TextNode = ({ data, selected }) => {
+  return (
+    <>
+      <NodeResizer color="#3b82f6" isVisible={selected} minWidth={80} minHeight={40} />
+      <div 
+        className="w-full h-full flex items-center p-3 rounded-xl transition-all duration-200 backdrop-blur-sm"
+        style={{
+          backgroundColor: data.bgColor || 'transparent',
+          color: data.textColor || '#1e293b',
+          border: selected ? '2px solid #3b82f6' : (data.bgColor ? '1px solid rgba(0,0,0,0.05)' : '2px dashed #cbd5e1'),
+          fontSize: `${data.fontSize || 14}px`,
+          fontWeight: data.isBold ? 'bold' : 'normal',
+        }}
+      >
+        <Handle type="source" position={Position.Top} id="top" className="opacity-0 w-2 h-2" />
+        <Handle type="source" position={Position.Bottom} id="bottom" className="opacity-0 w-2 h-2" />
+        <Handle type="source" position={Position.Left} id="left" className="opacity-0 w-2 h-2" />
+        <Handle type="source" position={Position.Right} id="right" className="opacity-0 w-2 h-2" />
+        
+        <div className="w-full h-full whitespace-pre-wrap break-words pointer-events-none flex flex-col justify-center text-center">
+          {data.label || 'Double-click to edit...'}
+        </div>
+      </div>
+    </>
+  );
+};
 
 const BaseNode = ({ id, data, selected, children, className = '', accentColor = 'bg-blue-500' }) => (
   <div className={`relative group min-w-[160px] bg-white/95 backdrop-blur-md rounded-xl border border-slate-200/80 shadow-sm transition-all duration-200 ${selected ? 'ring-2 ring-blue-500 shadow-blue-500/20' : 'hover:shadow-md'} ${className}`}>
