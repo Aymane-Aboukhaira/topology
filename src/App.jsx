@@ -74,23 +74,40 @@ function FlowCanvas() {
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
 
-  // Load from local storage on mount or user change
+  // Load from local storage or cloud on mount or user change
   useEffect(() => {
     if (!currentUser) return;
-    const saved = localStorage.getItem(`topology-save-${currentUser}`);
-    if (saved) {
-      try {
-        const { nodes: savedNodes, edges: savedEdges } = JSON.parse(saved);
-        setNodes(savedNodes && savedNodes.length > 0 ? savedNodes : []);
-        setEdges(savedEdges && savedEdges.length > 0 ? savedEdges : []);
-      } catch (e) {
-        console.error("Failed to load saved topology");
-      }
-    } else {
-      // New user, blank canvas
-      setNodes([]);
-      setEdges([]);
-    }
+    
+    // Attempt to load from Cloud API first
+    fetch(`/api/load?user=${encodeURIComponent(currentUser)}`)
+      .then(res => res.json())
+      .then(result => {
+        if (result.data) {
+          const { nodes: savedNodes, edges: savedEdges } = result.data;
+          setNodes(savedNodes && savedNodes.length > 0 ? savedNodes : []);
+          setEdges(savedEdges && savedEdges.length > 0 ? savedEdges : []);
+        } else {
+          throw new Error('No cloud data found');
+        }
+      })
+      .catch((err) => {
+        // Fallback to Local Storage if offline or cloud unconfigured
+        console.log("Cloud sync unavailable, falling back to local storage:", err);
+        const saved = localStorage.getItem(`topology-save-${currentUser}`);
+        if (saved) {
+          try {
+            const { nodes: savedNodes, edges: savedEdges } = JSON.parse(saved);
+            setNodes(savedNodes && savedNodes.length > 0 ? savedNodes : []);
+            setEdges(savedEdges && savedEdges.length > 0 ? savedEdges : []);
+          } catch (e) {
+            console.error("Failed to load saved topology");
+          }
+        } else {
+          // New user, blank canvas
+          setNodes([]);
+          setEdges([]);
+        }
+      });
   }, [currentUser, setNodes, setEdges]);
 
   const takeSnapshot = useCallback(() => {
@@ -374,10 +391,26 @@ function FlowCanvas() {
     gif.render();
   };
 
-  const saveToStorage = () => {
+  const saveToStorage = async () => {
     if (!currentUser) return;
-    localStorage.setItem(`topology-save-${currentUser}`, JSON.stringify({ nodes, edges }));
-    alert(`Workspace saved successfully to account: ${currentUser}`);
+    
+    const payload = { nodes, edges };
+    // Always save locally as a backup
+    localStorage.setItem(`topology-save-${currentUser}`, JSON.stringify(payload));
+    
+    try {
+      const response = await fetch('/api/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user: currentUser, data: payload })
+      });
+      
+      if (!response.ok) throw new Error('Cloud API error');
+      alert(`Workspace saved & synced to Cloud Account: ${currentUser}`);
+    } catch (err) {
+      console.log("Cloud API unavailable, saved locally.", err);
+      alert(`Workspace saved locally to: ${currentUser} (Cloud sync pending Setup)`);
+    }
   };
 
   const downloadJSON = () => {
