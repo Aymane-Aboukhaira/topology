@@ -14,7 +14,8 @@ import {
 
 import { 
   CloudNode, ISPNode, FirewallNode, SwitchNode, 
-  ServerNode, EndDeviceNode, APNode, GroupNode 
+  ServerNode, EndDeviceNode, APNode, GroupNode,
+  StickyNode, RegionNode 
 } from './components/nodes';
 import topologyData from './data/topology';
 import { WelcomeModal } from './components/WelcomeModal';
@@ -38,8 +39,9 @@ const nodeTypes = {
   infra: EndDeviceNode,
   security: FirewallNode,
   wireless: APNode,
-  monitoring: ServerNode,
   group: GroupNode,
+  sticky: StickyNode,
+  region: RegionNode,
   default: EndDeviceNode,
 };
 

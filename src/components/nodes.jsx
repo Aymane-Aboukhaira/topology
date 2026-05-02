@@ -1,5 +1,7 @@
 import React from 'react';
 import { Handle, Position } from 'reactflow';
+import { NodeResizer } from '@reactflow/node-resizer';
+import '@reactflow/node-resizer/dist/style.css';
 import { Cloud, Shield, Server, Router as RouterIcon, Wifi, Laptop, Printer, Video, ScanLine, Smartphone, Database, Activity, Box } from 'lucide-react';
 
 const HandleStyles = "w-3 h-3 !bg-blue-500 !border-2 !border-white !z-50 cursor-crosshair transition-transform hover:scale-150";
@@ -227,5 +229,33 @@ export const GroupNode = ({ data, selected }) => {
         </span>
       </div>
     </div>
+  );
+};
+
+export const StickyNode = ({ data, selected }) => {
+  return (
+    <div className={`relative w-full h-full min-w-[120px] min-h-[120px] bg-yellow-100/95 backdrop-blur-sm shadow-lg p-4 transition-all duration-300 ease-out border border-yellow-200/50 ${selected ? 'ring-2 ring-yellow-400 shadow-yellow-500/20 scale-105 z-50' : 'hover:scale-105 hover:shadow-xl'}`} style={{ borderBottomRightRadius: '24px' }}>
+      <NodeResizer color="#eab308" isVisible={selected} minWidth={120} minHeight={120} />
+      {/* Corner fold */}
+      <div className="absolute bottom-0 right-0 w-6 h-6 bg-yellow-200/80 rounded-tl-xl shadow-sm border-l border-t border-yellow-300/50"></div>
+      
+      <div className="w-full h-full flex flex-col pointer-events-none">
+        <div className="font-extrabold text-yellow-800 text-xs mb-2 uppercase tracking-wide border-b border-yellow-200/50 pb-1">{data.label || 'Note'}</div>
+        <div className="text-xs text-yellow-900 leading-relaxed whitespace-pre-wrap flex-grow overflow-hidden">{data.notes || "Select this note and type in the right panel to add text..."}</div>
+      </div>
+    </div>
+  );
+};
+
+export const RegionNode = ({ data, selected }) => {
+  return (
+    <>
+      <NodeResizer color="#6366f1" isVisible={selected} minWidth={200} minHeight={150} />
+      <div className={`w-full h-full border-2 border-dashed rounded-xl transition-all ${selected ? 'border-indigo-500 bg-indigo-50/10 shadow-lg shadow-indigo-500/5 z-0' : 'border-slate-300 bg-slate-50/30 -z-10'}`}>
+        <div className="absolute top-3 left-4 text-xs font-black text-slate-400 uppercase tracking-[0.2em] pointer-events-none opacity-50">
+          {data.label || 'Area Region'}
+        </div>
+      </div>
+    </>
   );
 };

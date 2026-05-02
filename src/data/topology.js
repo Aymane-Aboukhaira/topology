@@ -59,6 +59,9 @@ const e = (id, source, target, edgeType, label = '') => ({
 // ═════════════════════════════════════════════════════════════
 
 export const initialNodes = [
+  // ── Drawing Tools ─────────────────────────────────────────
+  n('tool-sticky', -500, -500, 'Sticky Note', 'Text Annotation', 'sticky', 'tools', { type: 'sticky' }),
+  n('tool-region', -500, -500, 'Drawing Region', 'Resizable Area', 'region', 'tools', { type: 'region' }),
 
   // ── Layer 0 · Internet ────────────────────────────────────
   n('internet', 900, 0, 'Internet', 'WAN Cloud', 'cloud', 'internet'),
