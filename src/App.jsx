@@ -14,8 +14,7 @@ import {
 
 import { 
   CloudNode, ISPNode, FirewallNode, SwitchNode, 
-  ServerNode, EndDeviceNode, APNode, GroupNode,
-  StickyNode, RegionNode 
+  ServerNode, EndDeviceNode, APNode, GroupNode 
 } from './components/nodes';
 import topologyData from './data/topology';
 import { WelcomeModal } from './components/WelcomeModal';
@@ -39,9 +38,8 @@ const nodeTypes = {
   infra: EndDeviceNode,
   security: FirewallNode,
   wireless: APNode,
+  monitoring: ServerNode,
   group: GroupNode,
-  sticky: StickyNode,
-  region: RegionNode,
   default: EndDeviceNode,
 };
 
@@ -73,6 +71,7 @@ function FlowCanvas() {
   // History State
   const [past, setPast] = useState([]);
   const [future, setFuture] = useState([]);
+  const [clipboard, setClipboard] = useState({ nodes: [], edges: [] });
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
 
@@ -193,6 +192,61 @@ function FlowCanvas() {
         }
       }
 
+      // Copy (Ctrl+C)
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') {
+        const selectedNodes = nodes.filter(n => n.selected);
+        if (selectedNodes.length > 0) {
+          e.preventDefault();
+          const selectedNodeIds = new Set(selectedNodes.map(n => n.id));
+          const selectedEdges = edges.filter(edge => selectedNodeIds.has(edge.source) && selectedNodeIds.has(edge.target));
+          setClipboard({ nodes: selectedNodes, edges: selectedEdges });
+        }
+      }
+
+      // Cut (Ctrl+X)
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'x') {
+        const selectedNodes = nodes.filter(n => n.selected);
+        if (selectedNodes.length > 0) {
+          e.preventDefault();
+          takeSnapshot();
+          const selectedNodeIds = new Set(selectedNodes.map(n => n.id));
+          const selectedEdges = edges.filter(edge => selectedNodeIds.has(edge.source) && selectedNodeIds.has(edge.target));
+          setClipboard({ nodes: selectedNodes, edges: selectedEdges });
+          
+          setNodes(nds => nds.filter(n => !n.selected));
+          setEdges(eds => eds.filter(edge => !selectedNodeIds.has(edge.source) && !selectedNodeIds.has(edge.target)));
+        }
+      }
+
+      // Paste (Ctrl+V)
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
+        if (clipboard.nodes.length > 0) {
+          e.preventDefault();
+          takeSnapshot();
+          const idMap = {};
+          const newNodes = clipboard.nodes.map(node => {
+            const newId = `${node.type}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+            idMap[node.id] = newId;
+            return {
+              ...node, id: newId, selected: true,
+              position: { x: node.position.x + 50, y: node.position.y + 50 }
+            };
+          });
+
+          const newEdges = clipboard.edges.map(edge => ({
+            ...edge,
+            id: `e_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+            source: idMap[edge.source], target: idMap[edge.target], selected: true
+          }));
+
+          setNodes(nds => [...nds.map(n => ({ ...n, selected: false })), ...newNodes]);
+          setEdges(eds => [...eds.map(e => ({ ...e, selected: false })), ...newEdges]);
+          
+          // Update clipboard so next paste offsets further
+          setClipboard({ nodes: newNodes, edges: newEdges });
+        }
+      }
+
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
         if (e.shiftKey) { e.preventDefault(); redo(); }
         else { e.preventDefault(); undo(); }
@@ -203,7 +257,7 @@ function FlowCanvas() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [undo, redo, nodes, edges, setNodes, setEdges, takeSnapshot]);
+  }, [undo, redo, nodes, edges, setNodes, setEdges, takeSnapshot, clipboard]);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedNode, setSelectedNode] = useState(null);
