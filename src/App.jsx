@@ -155,6 +155,42 @@ function FlowCanvas() {
     const handleKeyDown = (e) => {
       if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
       
+      // Select All (Ctrl+A)
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a') {
+        e.preventDefault();
+        setNodes(nds => nds.map(n => ({ ...n, selected: true })));
+        setEdges(eds => eds.map(edge => ({ ...edge, selected: true })));
+      }
+
+      // Duplicate (Ctrl+D)
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd') {
+        e.preventDefault();
+        const selectedNodes = nodes.filter(n => n.selected);
+        if (selectedNodes.length > 0) {
+          takeSnapshot();
+          const idMap = {};
+          const newNodes = selectedNodes.map(node => {
+            const newId = `${node.type}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+            idMap[node.id] = newId;
+            return {
+              ...node, id: newId, selected: true,
+              position: { x: node.position.x + 50, y: node.position.y + 50 }
+            };
+          });
+
+          // Duplicate internal edges
+          const selectedEdges = edges.filter(edge => idMap[edge.source] && idMap[edge.target]);
+          const newEdges = selectedEdges.map(edge => ({
+            ...edge,
+            id: `e_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+            source: idMap[edge.source], target: idMap[edge.target], selected: true
+          }));
+
+          setNodes(nds => [...nds.map(n => ({ ...n, selected: false })), ...newNodes]);
+          setEdges(eds => [...eds.map(e => ({ ...e, selected: false })), ...newEdges]);
+        }
+      }
+
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
         if (e.shiftKey) { e.preventDefault(); redo(); }
         else { e.preventDefault(); undo(); }
@@ -165,7 +201,7 @@ function FlowCanvas() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [undo, redo]);
+  }, [undo, redo, nodes, edges, setNodes, setEdges, takeSnapshot]);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedNode, setSelectedNode] = useState(null);
@@ -551,6 +587,9 @@ function FlowCanvas() {
           onDragOver={onDragOver}
           nodeTypes={nodeTypes}
           connectionMode={ConnectionMode.Loose}
+          selectionMode="partial"
+          selectionKeyCode="Shift"
+          multiSelectionKeyCode="Shift"
           fitView
           nodesFocusable={true}
           edgesFocusable={true}
