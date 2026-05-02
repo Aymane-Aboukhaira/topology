@@ -395,13 +395,23 @@ function FlowCanvas() {
   }, [hoveredEdge]);
   const onEdgeMouseLeave = useCallback(() => setHoveredEdge(null), []);
 
-  const handleExportPNG = () => {
-    const element = document.querySelector('.react-flow__viewport');
-    if (element) {
-      html2canvas(element, { backgroundColor: null }).then((canvas) => {
-        const link = document.createElement('a'); link.download = 'custom-topology.png';
-        link.href = canvas.toDataURL('image/png'); link.click();
+  const handleExportPNG = async () => {
+    const element = document.querySelector('.react-flow');
+    if (!element) return;
+    try {
+      const canvas = await html2canvas(element, { 
+        backgroundColor: '#f8fafc', 
+        scale: 2, // High resolution capture
+        useCORS: true,
+        logging: false
       });
+      const link = document.createElement('a'); 
+      link.download = 'topology-hq-export.png';
+      link.href = canvas.toDataURL('image/png', 1.0); 
+      link.click();
+    } catch (error) {
+      console.error("Export failed:", error);
+      alert("Failed to capture PNG. Please try again.");
     }
   };
 
